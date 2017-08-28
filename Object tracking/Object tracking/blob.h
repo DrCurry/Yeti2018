@@ -7,10 +7,10 @@ class Blob
 {
 public:
 	std::vector<cv::Point> contour;
-	cv::Rect boundingRect;
-	cv::Point centerPosition;
-	double dblDiagonalSize;
-	double dblAspectRatio;
+	cv::Rect bounding_Rect;
+	cv::Point center_Position;
+	double dbl_Diagonal_Size;
+	double dbl_Aspect_Ratio;
 	Blob(std::vector<cv::Point> _contour);
 };
 

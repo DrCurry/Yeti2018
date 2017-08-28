@@ -1,153 +1,151 @@
 #include<opencv2/core/core.hpp>
+#include"opencv2/imgproc.hpp"
 #include<opencv2/highgui/highgui.hpp>
-#include<opencv2/imgproc/imgproc.hpp>
 #include <stdlib.h>
 #include<iostream>
-#include "Blob.h"
+#include "blob.h"
 #include <chrono>
+#include <iomanip>
 
-#pragma region Trackbar function prototypes
-void low_B_thresh_trackbar(int, void*);
-void low_G_thresh_trackbar(int, void*);
-void low_R_thresh_trackbar(int, void*);
-void high_B_thresh_trackbar(int, void*);
-void high_G_thresh_trackbar(int, void*);
-void high_R_thresh_trackbar(int, void*);
-void rectangleArea_thresh_trackbar(int, void*);
-void rectangle_Width_thresh_trackbar(int, void*);
-#pragma endregion
-#pragma region Global Variables
-const cv::Scalar COLOR_1 = cv::Scalar(0.0, 0.0, 0.0);
-const cv::Scalar COLOR_2 = cv::Scalar(255.0, 255.0, 255.0);
-const cv::Scalar COLOR_3 = cv::Scalar(255.0, 0.0, 0.0);
-const cv::Scalar COLOR_4 = cv::Scalar(0.0, 200.0, 0.0);
-const cv::Scalar COLOR_5 = cv::Scalar(0.0, 0.0, 255.0);
-const cv::Scalar COLOR_6 = cv::Scalar(255.0, 127.0, 150);
-
-int rectArea = 0, maxArea = 2000;
-int rectWidth = 1, maxWidth = 20;
-int low_B = 0, low_G = 0, low_R = 160;
-int high_B = 79, high_G = 65, high_R = 255;
-
-cv::Mat imgFrame1;
-cv::Mat RedBlob;
-
-cv::Mat structuringElement3x3 = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
-cv::Mat structuringElement5x5 = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5));
-cv::Mat structuringElement7x7 = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(7, 7));
-cv::Mat structuringElement9x9 = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(9, 9));
-#pragma endregion
-
-int main(void) 
+#pragma region Trackbar Functions
+void Rect_Area_Max_Thresh(int, void*)
 {
-	cv::namedWindow("trackbars", cv::WINDOW_AUTOSIZE);
-	cv::namedWindow("blob params", cv::WINDOW_AUTOSIZE);
-	cv::VideoCapture webcam(0);
-	webcam.set(CV_CAP_PROP_FRAME_WIDTH, 640);
-	webcam.set(CV_CAP_PROP_FRAME_HEIGHT, 560);
+}
+void Rect_Area_Min_Thresh(int, void*)
+{
+}
+void Rect_Width_Max_Thresh(int, void*)
+{
+}
+void Rect_Width_Min_Thresh(int, void*)
+{
+}
+void Rect_Height_Max_Thresh(int, void*)
+{
+}
+void Rect_Height_Min_Thresh(int, void*)
+{
+}
+void Low_B_Thresh(int, void *)
+{
+}
+void Low_G_Thresh(int, void *)
+{
+}
+void Low_R_Thresh(int, void *)
+{
+}
+void High_B_Thresh(int, void *)
+{
+}
+void High_G_Thresh(int, void *)
+{
+}
+void High_R_Thresh(int, void *)
+{
+}
+#pragma endregion
 
-	cv::createTrackbar("Rect area", "blob params", &rectArea, maxArea, rectangleArea_thresh_trackbar);
-	cv::createTrackbar("Rect width", "blob params", &rectWidth, maxWidth, rectangle_Width_thresh_trackbar);
-	cv::createTrackbar("Low Blue", "trackbars", &low_B, 255, low_B_thresh_trackbar);
-	cv::createTrackbar("High Blue", "trackbars", &high_B, 255, high_B_thresh_trackbar);
-	cv::createTrackbar("Low Green", "trackbars", &low_G, 255, low_G_thresh_trackbar);
-	cv::createTrackbar("High Green", "trackbars", &high_G, 255, high_G_thresh_trackbar);
-	cv::createTrackbar("Low Red", "trackbars", &low_R, 255, low_R_thresh_trackbar);
-	cv::createTrackbar("High Red", "trackbars", &high_R, 255, high_R_thresh_trackbar);
+const cv::Scalar COLOR_1 = cv::Scalar(255.0, 255.0, 255.0);
+const cv::Scalar COLOR_2 = cv::Scalar(255.0, 0.0, 0.0);
+const cv::Scalar COLOR_3 = cv::Scalar(0.0, 200.0, 0.0);
+int maximum_Area = 1500, minimum_Area = 1000, area_Slider = 13000;
+int maximum_Width = 10, minimum_Width = 0, maximum_Height = 10, minimum_Height = 0, sides_Slider = 500;
+int Low_B = 0, Low_G = 0, Low_R = 100, High_B = 79, High_G = 65, High_R = 255;
+int cam, recording;
+cv::Mat input_From_Cam, Red_Blob;
+cv::Mat structuring_Element_3x3 = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(3, 3));
 
-	while ((char)cv::waitKey(36) != 'q') {
-		webcam >> imgFrame1;
-		if (imgFrame1.empty())
+int main(void)
+{
+	int window_Width = 640, window_Height = 480;
+	std::cout << " camera select 0-internal, 1-external" << std::endl;
+	std::cin >> cam;
+	std::cout << "record? select 0-no recording, 1-recording" << std::endl;
+	std::cin >> recording;
+
+	cv::VideoWriter record_Video("Yeti_Run.avi", CV_FOURCC('D', 'I', 'V', 'X'), 60, cv::Size(window_Width, window_Height));
+	cv::namedWindow("Colors", cv::WINDOW_AUTOSIZE);
+	cv::namedWindow("Blob params", cv::WINDOW_AUTOSIZE);
+	cv::VideoCapture webcam(cam);
+	webcam.set(CV_CAP_PROP_FRAME_WIDTH, window_Width);
+	webcam.set(CV_CAP_PROP_FRAME_HEIGHT, window_Height);
+
+	//////////////////BLOBS///////////////////////////////////////////
+	cv::createTrackbar("Area Max", "Blob params", &maximum_Area, area_Slider, Rect_Area_Max_Thresh);
+	cv::createTrackbar("Area Min", "Blob params", &minimum_Area, area_Slider, Rect_Area_Min_Thresh);
+	cv::createTrackbar("Width Max", "Blob params", &maximum_Width, sides_Slider, Rect_Width_Max_Thresh);
+	cv::createTrackbar("Width Min", "Blob params", &minimum_Width, sides_Slider, Rect_Width_Min_Thresh);
+	cv::createTrackbar("Height Max", "Blob params", &maximum_Height, sides_Slider, Rect_Height_Max_Thresh);
+	cv::createTrackbar("Height Min", "Blob params", &minimum_Height, sides_Slider, Rect_Height_Min_Thresh);
+
+	/////////////////COLORS///////////////////////////////////////////////
+	cv::createTrackbar("Low Blue", "Colors", &Low_B, 255, Low_B_Thresh);
+	cv::createTrackbar("High Blue", "Colors", &High_B, 255, High_B_Thresh);
+	cv::createTrackbar("Low Green", "Colors", &Low_G, 255, Low_G_Thresh);
+	cv::createTrackbar("High Green", "Colors", &High_G, 255, High_G_Thresh);
+	cv::createTrackbar("Low Red", "Colors", &Low_R, 255, Low_R_Thresh);
+	cv::createTrackbar("High Red", "Colors", &High_R, 255, High_R_Thresh);
+
+	while ((char)cv::waitKey(16) != 'q') {
+		webcam >> input_From_Cam;
+		if (input_From_Cam.empty())
 		{
 			break;
 		}
+		if (recording)
+		{
+			record_Video.write(input_From_Cam);
+		}
 
 		std::vector<Blob> blobs;
-		cv::inRange(imgFrame1, cv::Scalar(low_B, low_G, low_R), cv::Scalar(high_B, high_G, high_R), RedBlob);
-		cv::imshow("red", RedBlob);
+		cv::inRange(input_From_Cam, cv::Scalar(Low_B, Low_G, Low_R), cv::Scalar(High_B, High_G, High_R), Red_Blob);
+		cv::dilate(Red_Blob, Red_Blob, structuring_Element_3x3);
+		cv::imshow("red", Red_Blob);
+		std::vector<std::vector<cv::Point>> contours;
+		cv::findContours(Red_Blob, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
+		cv::drawContours(Red_Blob, contours, -1, COLOR_1, -1);
 
-		cv::dilate(RedBlob, RedBlob, structuringElement5x5);
-		cv::dilate(RedBlob, RedBlob, structuringElement3x3);
-
-		std::vector<std::vector<cv::Point> > contours;
-		cv::findContours(RedBlob, contours, cv::RETR_EXTERNAL, cv::CHAIN_APPROX_SIMPLE);
-		cv::Mat imgContours(RedBlob.size(), CV_8UC3, COLOR_1);
-		cv::drawContours(imgContours, contours, -1, COLOR_2, -1);
-		cv::imshow("imgContours", imgContours);
-
-		std::vector<std::vector<cv::Point> > convexHulls(contours.size());
+		std::vector<std::vector<cv::Point> > convex_Hulls(contours.size());
 
 		for (unsigned int i = 0; i < contours.size(); i++)
 		{
-			cv::convexHull(contours[i], convexHulls[i]);
+			cv::convexHull(contours[i], convex_Hulls[i]);
 		}
 
-		for (auto &convexHull : convexHulls)
+		for (auto &convexHull : convex_Hulls)
 		{
 			Blob possibleBlob(convexHull);
 
-			if (possibleBlob.boundingRect.area() > rectArea &&
-				possibleBlob.dblAspectRatio >= 0.2 &&
-				possibleBlob.dblAspectRatio <= 1.2 &&
-				possibleBlob.boundingRect.width > rectWidth &&
-				possibleBlob.boundingRect.height > 20 &&
-				possibleBlob.dblDiagonalSize > 30.0) {
+			if (possibleBlob.bounding_Rect.area() < maximum_Area && possibleBlob.bounding_Rect.area() > minimum_Area &&
+				possibleBlob.dbl_Aspect_Ratio >= 0.5 && possibleBlob.dbl_Aspect_Ratio <= 1.2 &&
+				possibleBlob.bounding_Rect.width < maximum_Width && possibleBlob.bounding_Rect.width > minimum_Width &&
+				possibleBlob.bounding_Rect.height < maximum_Height && possibleBlob.bounding_Rect.height > minimum_Height)
+			{
 				blobs.push_back(possibleBlob);
+				std::cout << std::setprecision(2) << possibleBlob.bounding_Rect.area() << " " << possibleBlob.dbl_Aspect_Ratio << " "
+					<< possibleBlob.bounding_Rect.width << " " << possibleBlob.bounding_Rect.height << " " << possibleBlob.dbl_Diagonal_Size << std::endl;
+				std::cout << "detected" << std::endl;
+			}
+			else
+			{
+				std::cout << "clear" << std::endl;
 			}
 		}
 
-		cv::Mat imgConvexHulls(RedBlob.size(), CV_8UC3, COLOR_1);
-
-		convexHulls.clear();
+		convex_Hulls.clear();
 
 		for (auto &blob : blobs)
 		{
-			convexHulls.push_back(blob.contour);
-			cv::drawContours(imgConvexHulls, convexHulls, -1, COLOR_2, -1);  // for each blob
-			cv::rectangle(imgFrame1, blob.boundingRect, COLOR_6, 2);		 // draw a box around the blob
-			cv::circle(imgFrame1, blob.centerPosition, 3, COLOR_4, -1);		 // draw a filled-in circle at the center
+			convex_Hulls.push_back(blob.contour);
+			cv::drawContours(Red_Blob, convex_Hulls, -1, COLOR_1, -1);  // for each blob found
+			cv::rectangle(input_From_Cam, blob.bounding_Rect, COLOR_2, 2);		 // draw a box around the blob
+			cv::circle(input_From_Cam, blob.center_Position, 4, COLOR_3, -1);	 // draw a filled-in circle at the center
 		}
-
-		cv::imshow("imgConvexHulls", imgConvexHulls);
-		cv::imshow("imgFrame1", imgFrame1);
-
+		cv::imshow("Camera", input_From_Cam);
 	}
-
-
 	return(0);
 
 }
-#pragma region Trackbar callbacks
-void rectangleArea_thresh_trackbar(int, void*)
-{
 
-}
-void rectangle_Width_thresh_trackbar(int, void*)
-{
 
-}
-void low_B_thresh_trackbar(int, void *)
-{
-
-}
-
-void low_G_thresh_trackbar(int, void *)
-{
-}
-
-void low_R_thresh_trackbar(int, void *)
-{
-}
-
-void high_B_thresh_trackbar(int, void *)
-{
-}
-
-void high_G_thresh_trackbar(int, void *)
-{
-}
-
-void high_R_thresh_trackbar(int, void *)
-{
-}
-#pragma endregion
